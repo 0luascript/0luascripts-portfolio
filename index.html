@@ -1,766 +1,580 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>0luascript | Roblox Developer</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #6B5AED;
-            --secondary-color: #00D4FF;
-            --bg-dark: #0A0B1E;
-            --bg-darker: #050614;
-            --text-primary: #FFFFFF;
-            --text-secondary: #B8BCC8;
-            --card-bg: rgba(107, 90, 237, 0.05);
-            --border-color: rgba(107, 90, 237, 0.2);
-        }
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>0luascript — Roblox Scripter for Hire</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:           #eeebe5;
+      --ink:          #0c0c0c;
+      --muted:        #7a7060;
+      --border:       rgba(0,0,0,0.09);
+      --glass-bg:     rgba(238,235,229,0.58);
+      --glass-border: rgba(0,0,0,0.11);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--ink); font-family: 'DM Mono', monospace; font-size: 14px; overflow-x: hidden; min-height: 100vh; }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    #blob-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
 
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-dark);
-            color: var(--text-primary);
-            overflow-x: hidden;
-            line-height: 1.6;
-        }
+    .grain { position: fixed; inset: -200%; width: 400%; height: 400%; z-index: 1; pointer-events: none; opacity: .095; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.78' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); animation: grain-shift 7s steps(2) infinite; }
+    @keyframes grain-shift { 0%,100%{transform:translate(0,0)} 10%{transform:translate(-2%,-3%)} 20%{transform:translate(3%,2%)} 30%{transform:translate(-1%,4%)} 40%{transform:translate(4%,-1%)} 50%{transform:translate(-3%,1%)} 60%{transform:translate(2%,-4%)} 70%{transform:translate(-4%,3%)} 80%{transform:translate(1%,-2%)} 90%{transform:translate(3%,4%)} }
+    .scratches { position: fixed; inset: 0; z-index: 2; pointer-events: none; opacity: .055; background-image: repeating-linear-gradient(172deg,transparent,transparent 88px,rgba(0,0,0,.5) 89px,transparent 91px), repeating-linear-gradient(82deg,transparent,transparent 135px,rgba(0,0,0,.25) 136px,transparent 138px), repeating-linear-gradient(7deg,transparent,transparent 195px,rgba(0,0,0,.16) 196px,transparent 197px); }
+    .ink-edges { position: fixed; inset: 0; z-index: 2; pointer-events: none; background: radial-gradient(ellipse 90% 14% at 50% 0%,rgba(0,0,0,.17) 0%,transparent 100%), radial-gradient(ellipse 90% 14% at 50% 100%,rgba(0,0,0,.17) 0%,transparent 100%), radial-gradient(ellipse 14% 90% at 0% 50%,rgba(0,0,0,.11) 0%,transparent 100%), radial-gradient(ellipse 14% 90% at 100% 50%,rgba(0,0,0,.11) 0%,transparent 100%); }
 
-        /* Animated Background */
-        .bg-animation {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            z-index: -1;
-            background: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 100%);
-        }
+    .site-wrap { position: relative; z-index: 10; max-width: 1100px; margin: 0 auto; padding: 0 32px; }
 
-        .bg-animation::before {
-            content: '';
-            position: absolute;
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, var(--primary-color), transparent);
-            opacity: 0.1;
-            top: -200px;
-            right: -200px;
-            animation: float 20s infinite ease-in-out;
-        }
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 16px 40px; display: flex; align-items: center; justify-content: space-between; background: rgba(238,235,229,.74); backdrop-filter: blur(22px) saturate(1.2); -webkit-backdrop-filter: blur(22px) saturate(1.2); border-bottom: 1px solid var(--border); }
+    .nav-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 17px; letter-spacing: -.5px; color: var(--ink); }
+    .nav-logo span { color: var(--muted); }
+    .nav-links { display: flex; gap: 28px; list-style: none; }
+    .nav-links a { text-decoration: none; color: var(--muted); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; transition: color .2s; }
+    .nav-links a:hover { color: var(--ink); }
+    .nav-cta { padding: 8px 20px; background: var(--ink); color: var(--bg); font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; border: none; border-radius: 4px; text-decoration: none; transition: opacity .2s; }
+    .nav-cta:hover { opacity: .70; }
 
-        .bg-animation::after {
-            content: '';
-            position: absolute;
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, var(--secondary-color), transparent);
-            opacity: 0.05;
-            bottom: -300px;
-            left: -300px;
-            animation: float 25s infinite ease-in-out reverse;
-        }
+    .hero { min-height: 100vh; display: flex; align-items: center; padding-top: 80px; }
+    .hero-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; width: 100%; }
+    .hero-label { font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+    .hero-label::before { content: ''; display: block; width: 28px; height: 1px; background: var(--muted); }
+    .hero-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(48px,5vw,70px); line-height: 1; letter-spacing: -2px; margin-bottom: 10px; color: var(--ink); }
+    .hero-name .accent { color: var(--muted); }
+    .hero-subtitle { font-family: 'Syne', sans-serif; font-weight: 600; font-size: clamp(13px,1.4vw,17px); color: var(--muted); margin-bottom: 22px; }
+    .hero-desc { color: var(--muted); line-height: 1.85; max-width: 460px; margin-bottom: 38px; font-size: 13px; }
+    .hero-btns { display: flex; gap: 14px; flex-wrap: wrap; }
+    .btn-primary { padding: 13px 28px; background: var(--ink); color: var(--bg); font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; border: none; border-radius: 6px; text-decoration: none; transition: opacity .2s, transform .15s; }
+    .btn-primary:hover { opacity: .70; transform: translateY(-1px); }
+    .btn-secondary { padding: 13px 28px; background: transparent; color: var(--ink); font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; border: 1.5px solid var(--border); border-radius: 6px; text-decoration: none; transition: border-color .2s, background .2s; }
+    .btn-secondary:hover { border-color: var(--ink); background: rgba(0,0,0,.04); }
 
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            33% { transform: translate(30px, -30px) rotate(120deg); }
-            66% { transform: translate(-20px, 20px) rotate(240deg); }
-        }
+    .glass-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; backdrop-filter: blur(28px) saturate(1.3); -webkit-backdrop-filter: blur(28px) saturate(1.3); overflow: hidden; position: relative; }
+    .glass-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg,rgba(255,255,255,.32) 0%,transparent 55%); pointer-events: none; }
 
-        /* Navigation */
-        nav {
-            position: fixed;
-            width: 100%;
-            top: 0;
-            padding: 20px 50px;
-            background: rgba(10, 11, 30, 0.8);
-            backdrop-filter: blur(10px);
-            z-index: 1000;
-            transition: all 0.3s ease;
-        }
+    .win-bar { display: flex; align-items: center; justify-content: space-between; padding: 9px 14px; background: rgba(0,0,0,.032); border-bottom: 1px solid var(--border); }
+    .win-bar-title { font-size: 11px; color: var(--muted); letter-spacing: .04em; }
+    .win-controls { display: flex; gap: 5px; }
+    .win-btn { width: 26px; height: 18px; background: rgba(0,0,0,.05); border: 1px solid rgba(0,0,0,.07); border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--muted); transition: background .15s; }
+    .win-btn:hover { background: rgba(0,0,0,.11); }
+    .win-btn.close:hover { background: #c42b1c; color: white; }
 
-        nav.scrolled {
-            padding: 15px 50px;
-            background: rgba(5, 6, 20, 0.95);
-            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.5);
-        }
+    .stats-card { padding: 24px; }
+    .stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .stat-item { padding: 16px; background: rgba(0,0,0,.04); border: 1px solid var(--border); border-radius: 8px; }
+    .stat-value { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 24px; color: var(--ink); line-height: 1; margin-bottom: 5px; }
+    .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+    .available-badge { display: flex; align-items: center; gap: 7px; margin-top: 16px; padding: 8px 14px; background: rgba(0,0,0,.05); border: 1px solid rgba(0,0,0,.12); border-radius: 20px; width: fit-content; }
+    .badge-dot { width: 7px; height: 7px; background: var(--ink); border-radius: 50%; animation: pulse-dot 2.2s ease-in-out infinite; }
+    @keyframes pulse-dot { 0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(0,0,0,.25)} 50%{opacity:.5;box-shadow:0 0 0 5px rgba(0,0,0,0)} }
+    .badge-text { font-size: 10px; color: var(--ink); text-transform: uppercase; letter-spacing: .1em; }
 
-        .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+    section { padding: 96px 0; }
+    .section-label { font-size: 10px; letter-spacing: .25em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+    .section-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(32px,3.5vw,48px); line-height: 1.05; letter-spacing: -1.5px; margin-bottom: 16px; }
+    .section-desc { color: var(--muted); line-height: 1.8; max-width: 500px; margin-bottom: 46px; }
 
-        .logo {
-            font-size: 24px;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            cursor: pointer;
-        }
 
-        .nav-links {
-            display: flex;
-            gap: 30px;
-            list-style: none;
-        }
+    .avatar-card:hover { transform: translateY(-3px); border-color: rgba(0,0,0,.26); }
 
-        .nav-links a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            transition: all 0.3s ease;
-            position: relative;
-            font-weight: 500;
-        }
+    .skills-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+    .skill-card { padding: 24px; transition: transform .2s, border-color .2s; }
+    .skill-card:hover { transform: translateY(-3px); border-color: rgba(0,0,0,.26); }
+    .skill-icon { width: 36px; height: 36px; background: rgba(0,0,0,.055); border: 1px solid rgba(0,0,0,.09); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; color: var(--ink); font-family: 'Syne', sans-serif; font-weight: 800; margin-bottom: 16px; }
+    .skill-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; margin-bottom: 8px; }
+    .skill-desc { font-size: 12px; color: var(--muted); line-height: 1.7; }
 
-        .nav-links a:hover {
-            color: var(--secondary-color);
-        }
+    .showcase-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .showcase-card { border-radius: 10px; overflow: hidden; border: 1px solid var(--border); background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); transition: transform .2s, border-color .2s; }
+    .showcase-card:hover { transform: translateY(-3px); border-color: rgba(0,0,0,.26); }
+    .showcase-info { padding: 18px 20px; }
+    .showcase-tag { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+    .showcase-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; color: var(--ink); }
 
-        .nav-links a::after {
-            content: '';
-            position: absolute;
-            width: 0;
-            height: 2px;
-            bottom: -5px;
-            left: 0;
-            background: var(--secondary-color);
-            transition: width 0.3s ease;
-        }
+    .estimator-body { padding: 28px; }
+    .estimator-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; }
+    .estimator-group-label { font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+    .tier-list, .addon-list { display: flex; flex-direction: column; gap: 6px; }
+    .tier-item { display: flex; align-items: center; gap: 12px; padding: 11px 14px; background: rgba(0,0,0,.03); border: 1px solid var(--border); border-radius: 7px; transition: border-color .15s, background .15s; line-height: 1; }
+    .tier-item:hover { border-color: rgba(0,0,0,.22); background: rgba(0,0,0,.055); }
+    .tier-item.selected { border-color: rgba(0,0,0,.35); background: rgba(0,0,0,.07); }
+    .tier-item input { flex-shrink: 0; accent-color: var(--ink); width: 14px; height: 14px; }
+    .tier-name { font-size: 12px; color: var(--ink); flex: 1; }
+    .tier-price { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .estimator-right { position: sticky; top: 90px; }
+    .estimate-inner { padding: 22px; min-height: 260px; display: flex; flex-direction: column; justify-content: center; }
+    .estimate-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: var(--muted); font-size: 12px; text-align: center; padding: 40px 0; opacity: .5; }
+    .estimate-empty span { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px; }
+    .estimate-section-label { font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+    .estimate-breakdown { display: flex; flex-direction: column; gap: 7px; margin-bottom: 16px; }
+    .estimate-line { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--muted); }
+    .estimate-line span:last-child { font-family: 'DM Mono', monospace; color: var(--ink); }
+    .estimate-divider { height: 1px; background: var(--border); margin: 14px 0; }
+    .estimate-total-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+    .estimate-total-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; }
+    .estimate-total-usd { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 30px; color: var(--ink); }
+    .estimate-total-robux { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--muted); }
+    .estimate-note { font-size: 11px; color: var(--muted); line-height: 1.7; margin-top: 4px; }
 
-        .nav-links a:hover::after {
-            width: 100%;
-        }
+    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .contact-card { padding: 30px; text-decoration: none; color: inherit; transition: border-color .2s, transform .2s; }
+    .contact-card:hover { border-color: rgba(0,0,0,.32); transform: translateY(-3px); }
+    .contact-platform { font-size: 10px; letter-spacing: .15em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+    .contact-handle { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 20px; color: var(--ink); }
+    .contact-detail { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.6; }
 
-        /* Hero Section */
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 100px 50px 50px;
-            position: relative;
-        }
+    .divider { width: 100%; height: 1px; background: linear-gradient(90deg,transparent,var(--border),transparent); margin: 10px 0; }
+    footer { padding: 38px 0; border-top: 1px solid var(--border); }
+    .footer-inner { display: flex; align-items: center; justify-content: space-between; }
+    .footer-copy { font-size: 11px; color: var(--muted); }
+    .footer-tag { font-size: 11px; color: var(--muted); }
+    .footer-tag span { color: var(--ink); }
+    .reveal { opacity: 0; transform: translateY(22px); transition: opacity .6s ease, transform .6s ease; }
+    .reveal.in-view { opacity: 1; transform: translateY(0); }
+    .hidden { display: none !important; }
 
-        .hero-content {
-            max-width: 1200px;
-            text-align: center;
-            animation: fadeInUp 1s ease;
-        }
+    @media (max-width: 900px) { .info-grid { grid-template-columns: 1fr; } .estimator-cols { grid-template-columns: 1fr; } .estimator-right { position: static; } }
+    @media (max-width: 768px) { .hero-inner,.skills-grid,.showcase-grid,.contact-grid { grid-template-columns: 1fr; } nav { padding: 14px 20px; } .nav-links { display: none; } .site-wrap { padding: 0 20px; } }
 
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+    /* CREDENTIALS QUAL GRID */
 
-        .hero-subtitle {
-            color: var(--secondary-color);
-            font-size: 18px;
-            margin-bottom: 20px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
+    /* KNOW ME SECTION */
+    .know-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    .know-card { display: flex; flex-direction: column; }
+    .know-body { padding: 22px 24px; flex: 1; display: flex; flex-direction: column; gap: 14px; }
 
-        .hero-title {
-            font-size: clamp(40px, 8vw, 80px);
-            font-weight: 900;
-            margin-bottom: 20px;
-            line-height: 1.1;
-        }
+    /* terminal style text */
+    .term-prompt { color: var(--muted); font-size: 11px; }
+    .term-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px; color: var(--ink); letter-spacing: -.5px; }
+    .term-accent { color: var(--muted); }
+    .term-meta { display: flex; flex-direction: column; gap: 6px; font-family: 'DM Mono', monospace; font-size: 12px; }
+    .term-key { color: var(--muted); }
+    .term-val { color: var(--ink); font-weight: 500; }
+    .term-divider { height: 1px; background: var(--border); width: 100%; }
+    .term-bio { font-size: 12px; color: var(--muted); line-height: 1.75; }
+    .term-bio strong { color: var(--ink); font-weight: 600; }
 
-        .gradient-text {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+    /* skill bars */
+    .skill-bar-row { display: flex; flex-direction: column; gap: 5px; }
+    .skill-bar-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink); }
+    .skill-bar-pct { color: var(--muted); font-family: 'DM Mono', monospace; font-size: 11px; }
+    .skill-bar-track { width: 100%; height: 5px; background: rgba(0,0,0,.08); border-radius: 99px; overflow: hidden; }
+    .skill-bar-fill { height: 100%; background: var(--ink); border-radius: 99px; width: 0%; transition: width 1.1s cubic-bezier(.4,0,.2,1); }
 
-        .hero-description {
-            font-size: 20px;
-            color: var(--text-secondary);
-            max-width: 600px;
-            margin: 0 auto 40px;
-        }
+    /* philosophy */
+    .term-quote { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--ink); font-style: italic; line-height: 1.7; }
+    .term-author { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
 
-        .hero-buttons {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
+    @media (max-width: 900px) { .know-grid { grid-template-columns: 1fr; } }
 
-        .btn {
-            padding: 15px 40px;
-            font-size: 16px;
-            font-weight: 600;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-        }
+    .phil-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); }
+    .profile-status { display: flex; align-items: center; gap: 8px; padding: 9px 14px; background: rgba(0,0,0,.04); border: 1px solid var(--border); border-radius: 20px; width: fit-content; }
 
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            box-shadow: 0 10px 30px rgba(107, 90, 237, 0.3);
-        }
+    /* CHAT THREAD */
+    .chat-thread { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+    .chat-msg { display: flex; }
+    .chat-me { justify-content: flex-end; }
+    .chat-other { justify-content: flex-start; }
+    .chat-bubble { padding: 10px 14px; border-radius: 12px; font-size: 12px; line-height: 1.65; max-width: 88%; }
+    .chat-bubble-other { background: rgba(0,0,0,.06); border: 1px solid var(--border); color: var(--muted); border-bottom-left-radius: 3px; }
+    .chat-bubble-me { background: var(--ink); color: var(--bg); border-bottom-right-radius: 3px; }
 
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 40px rgba(107, 90, 237, 0.4);
-        }
-
-        .btn-secondary {
-            background: transparent;
-            color: var(--text-primary);
-            border: 2px solid var(--primary-color);
-        }
-
-        .btn-secondary:hover {
-            background: var(--primary-color);
-            transform: translateY(-3px);
-        }
-
-        /* About Section */
-        .section {
-            padding: 100px 50px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .section-title {
-            font-size: 48px;
-            font-weight: 800;
-            text-align: center;
-            margin-bottom: 60px;
-        }
-
-        .about-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 60px;
-            align-items: center;
-        }
-
-        .about-text {
-            color: var(--text-secondary);
-            font-size: 18px;
-            line-height: 1.8;
-        }
-
-        .skills-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-        }
-
-        .skill-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            padding: 20px;
-            border-radius: 15px;
-            transition: all 0.3s ease;
-        }
-
-        .skill-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--primary-color);
-            box-shadow: 0 10px 30px rgba(107, 90, 237, 0.2);
-        }
-
-        .skill-icon {
-            font-size: 30px;
-            margin-bottom: 10px;
-            color: var(--secondary-color);
-        }
-
-        .skill-name {
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-
-        .skill-level {
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-
-        /* Projects Section */
-        .projects {
-            background: var(--bg-darker);
-        }
-
-        .projects-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 30px;
-        }
-
-        .project-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .project-card:hover {
-            transform: translateY(-10px);
-            border-color: var(--primary-color);
-            box-shadow: 0 20px 40px rgba(107, 90, 237, 0.3);
-        }
-
-        .project-image {
-            width: 100%;
-            height: 200px;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 48px;
-            color: white;
-        }
-
-        .project-content {
-            padding: 30px;
-        }
-
-        .project-title {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
-
-        .project-description {
-            color: var(--text-secondary);
-            margin-bottom: 20px;
-        }
-
-        .project-tags {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .tag {
-            padding: 5px 15px;
-            background: rgba(107, 90, 237, 0.2);
-            border: 1px solid var(--primary-color);
-            border-radius: 20px;
-            font-size: 12px;
-            color: var(--primary-color);
-        }
-
-        /* Contact Section */
-        .contact-container {
-            max-width: 600px;
-            margin: 0 auto;
-            text-align: center;
-        }
-
-        .contact-links {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin-top: 40px;
-        }
-
-        .contact-link {
-            width: 60px;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--card-bg);
-            border: 2px solid var(--border-color);
-            border-radius: 15px;
-            color: var(--text-primary);
-            font-size: 24px;
-            transition: all 0.3s ease;
-            text-decoration: none;
-        }
-
-        .contact-link:hover {
-            background: var(--primary-color);
-            border-color: var(--primary-color);
-            transform: translateY(-5px) rotate(5deg);
-        }
-
-        /* Footer */
-        footer {
-            text-align: center;
-            padding: 30px;
-            background: var(--bg-darker);
-            color: var(--text-secondary);
-            border-top: 1px solid var(--border-color);
-        }
-
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            nav {
-                padding: 15px 20px;
-            }
-
-            .nav-links {
-                gap: 15px;
-            }
-
-            .hero {
-                padding: 100px 20px 50px;
-            }
-
-            .hero-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .about-content {
-                grid-template-columns: 1fr;
-            }
-
-            .skills-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .section {
-                padding: 60px 20px;
-            }
-
-            .projects-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Scroll Reveal Animation */
-        .reveal {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.8s ease;
-        }
-
-        .reveal.active {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    </style>
+    /* SHOWCASE VIDEO */
+    .showcase-video-wrap { width: 100%; aspect-ratio: 16/9; overflow: hidden; border-bottom: 1px solid var(--border); background: rgba(0,0,0,.06); }
+    .showcase-iframe { width: 100%; height: 100%; border: none; display: block; }
+  </style>
 </head>
 <body>
-    <div class="bg-animation"></div>
 
-    <nav id="navbar">
-        <div class="nav-container">
-            <div class="logo">0luascript</div>
-            <ul class="nav-links">
-                <li><a href="#home">Home</a></li>
-                <li><a href="#about">About</a></li>
-                <li><a href="#projects">Projects</a></li>
-                <li><a href="#contact">Contact</a></li>
-            </ul>
+<canvas id="blob-canvas"></canvas>
+<div class="grain"></div>
+<div class="scratches"></div>
+<div class="ink-edges"></div>
+
+<nav>
+  <div class="nav-logo">0<span>lua</span>script</div>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#skills">Skills</a></li>
+    <li><a href="#work">Work</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <a href="#contact" class="nav-cta">Hire Me</a>
+</nav>
+
+<div class="site-wrap">
+
+  <section class="hero" id="about">
+    <div class="hero-inner">
+      <div class="reveal">
+        <div class="hero-label">Full-Stack Developer for Hire</div>
+        <h1 class="hero-name">0lua<span class="accent">script</span></h1>
+        <p class="hero-subtitle">Full-Stack Roblox · Luau Developer</p>
+        <p class="hero-desc">Hi, I'm Jack — a 19 year old UK-based full-stack Roblox developer with 2+ years in Luau. Available 7 days a week, with formal qualifications that make clean, logical code second nature.</p>
+        <div class="hero-btns">
+          <a href="#contact" class="btn-primary">Work With Me</a>
+          <a href="#skills" class="btn-secondary">See Skills</a>
         </div>
-    </nav>
-
-    <section id="home" class="hero">
-        <div class="hero-content">
-            <div class="hero-subtitle">Welcome to my portfolio</div>
-            <h1 class="hero-title">
-                Hi, I'm <span class="gradient-text">0luascript</span>
-            </h1>
-            <p class="hero-description">
-                Professional Roblox Developer specializing in advanced Lua scripting, 
-                game mechanics, and immersive experiences
-            </p>
-            <div class="hero-buttons">
-                <a href="#projects" class="btn btn-primary">
-                    <i class="fas fa-code"></i> View Projects
-                </a>
-                <a href="#contact" class="btn btn-secondary">
-                    <i class="fas fa-envelope"></i> Get In Touch
-                </a>
+      </div>
+      <div class="reveal" style="transition-delay:.15s">
+        <div class="glass-card">
+          <div class="win-bar">
+            <span class="win-bar-title">jack.lua — 0luascript</span>
+            <div class="win-controls">
+              <div class="win-btn">─</div><div class="win-btn">□</div><div class="win-btn close">✕</div>
             </div>
+          </div>
+          <div class="stats-card">
+            <div class="stat-row">
+              <div class="stat-item"><div class="stat-value">2+</div><div class="stat-label">Years Exp.</div></div>
+              <div class="stat-item"><div class="stat-value">40+</div><div class="stat-label">Projects</div></div>
+              <div class="stat-item"><div class="stat-value">400+</div><div class="stat-label">Commissions</div></div>
+              <div class="stat-item"><div class="stat-value">98%</div><div class="stat-label">Satisfaction</div></div>
+            </div>
+            <div class="available-badge">
+              <div class="badge-dot"></div>
+              <span class="badge-text">Available for commissions</span>
+            </div>
+          </div>
         </div>
-    </section>
+      </div>
+    </div>
+  </section>
 
-    <section id="about" class="section reveal">
-        <h2 class="section-title gradient-text">About Me</h2>
-        <div class="about-content">
-            <div class="about-text">
-                <p>
-                    I'm a passionate Roblox developer with years of experience creating 
-                    engaging games and systems. My expertise spans from complex game 
-                    mechanics to optimized networking solutions.
-                </p>
-                <br>
-                <p>
-                    I specialize in creating scalable, maintainable code that brings 
-                    creative visions to life. Whether it's implementing advanced AI systems, 
-                    creating smooth UI/UX, or optimizing game performance, I deliver 
-                    high-quality solutions.
-                </p>
-            </div>
-            <div class="skills-grid">
-                <div class="skill-card">
-                    <div class="skill-icon">⚡</div>
-                    <div class="skill-name">Lua Scripting</div>
-                    <div class="skill-level">Expert Level</div>
-                </div>
-                <div class="skill-card">
-                    <div class="skill-icon">🎮</div>
-                    <div class="skill-name">Game Design</div>
-                    <div class="skill-level">Advanced</div>
-                </div>
-                <div class="skill-card">
-                    <div class="skill-icon">🔧</div>
-                    <div class="skill-name">Systems Development</div>
-                    <div class="skill-level">Expert Level</div>
-                </div>
-                <div class="skill-card">
-                    <div class="skill-icon">🎨</div>
-                    <div class="skill-name">UI/UX Design</div>
-                    <div class="skill-level">Advanced</div>
-                </div>
-            </div>
+  <section id="info">
+    <div class="reveal">
+      <div class="section-label">// get to know me</div>
+      <h2 class="section-title">Get To Know Me</h2>
+    </div>
+
+    <div class="know-grid">
+
+      <!-- PROFILE CARD -->
+      <div class="glass-card know-card know-profile reveal" style="transition-delay:.05s">
+        <div class="win-bar">
+          <span class="win-bar-title"><span class="term-prompt">&gt;_</span> &lt;profile&gt;</span>
+          <div class="win-controls"><div class="win-btn">─</div><div class="win-btn">□</div><div class="win-btn close">✕</div></div>
         </div>
-    </section>
-
-    <section id="projects" class="section projects reveal">
-        <h2 class="section-title gradient-text">My Projects</h2>
-        <div class="projects-grid">
-            <div class="project-card">
-                <div class="project-image">
-                    <i class="fas fa-gamepad"></i>
-                </div>
-                <div class="project-content">
-                    <h3 class="project-title">RPG Framework</h3>
-                    <p class="project-description">
-                        Complete RPG system with inventory, quests, combat mechanics, 
-                        and player progression systems.
-                    </p>
-                    <div class="project-tags">
-                        <span class="tag">Lua</span>
-                        <span class="tag">OOP</span>
-                        <span class="tag">DataStore</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="project-card">
-                <div class="project-image">
-                    <i class="fas fa-network-wired"></i>
-                </div>
-                <div class="project-content">
-                    <h3 class="project-title">Anti-Exploit System</h3>
-                    <p class="project-description">
-                        Advanced security framework protecting games from common exploits 
-                        and unauthorized modifications.
-                    </p>
-                    <div class="project-tags">
-                        <span class="tag">Security</span>
-                        <span class="tag">RemoteEvents</span>
-                        <span class="tag">Validation</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="project-card">
-                <div class="project-image">
-                    <i class="fas fa-robot"></i>
-                </div>
-                <div class="project-content">
-                    <h3 class="project-title">AI NPC System</h3>
-                    <p class="project-description">
-                        Intelligent NPC behavior system with pathfinding, state machines, 
-                        and dynamic interactions.
-                    </p>
-                    <div class="project-tags">
-                        <span class="tag">AI</span>
-                        <span class="tag">Pathfinding</span>
-                        <span class="tag">FSM</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="project-card">
-                <div class="project-image">
-                    <i class="fas fa-coins"></i>
-                </div>
-                <div class="project-content">
-                    <h3 class="project-title">Economy System</h3>
-                    <p class="project-description">
-                        Robust economy framework with trading, shops, currencies, 
-                        and marketplace integration.
-                    </p>
-                    <div class="project-tags">
-                        <span class="tag">Economy</span>
-                        <span class="tag">Trading</span>
-                        <span class="tag">Database</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="project-card">
-                <div class="project-image">
-                    <i class="fas fa-users"></i>
-                </div>
-                <div class="project-content">
-                    <h3 class="project-title">Matchmaking Service</h3>
-                    <p class="project-description">
-                        Skill-based matchmaking system with queue management and 
-                        balanced team creation.
-                    </p>
-                    <div class="project-tags">
-                        <span class="tag">Networking</span>
-                        <span class="tag">Algorithm</span>
-                        <span class="tag">Queue</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="project-card">
-                <div class="project-image">
-                    <i class="fas fa-magic"></i>
-                </div>
-                <div class="project-content">
-                    <h3 class="project-title">VFX Framework</h3>
-                    <p class="project-description">
-                        Optimized visual effects system with particle management 
-                        and performance optimization.
-                    </p>
-                    <div class="project-tags">
-                        <span class="tag">VFX</span>
-                        <span class="tag">Optimization</span>
-                        <span class="tag">Particles</span>
-                    </div>
-                </div>
-            </div>
+        <div class="know-body">
+          <div class="term-title">&gt; 0lua<span class="term-accent">::</span>script</div>
+          <div class="term-meta">
+            <div><span class="term-key">qualifications:</span> <span class="term-val">CS · Maths · Physics</span></div>
+            <div><span class="term-key">timezone:</span> <span class="term-val">GMT+1 · United Kingdom</span></div>
+            <div><span class="term-key">available:</span> <span class="term-val">7 days a week</span></div>
+            <div><span class="term-key">partial upfront:</span> <span class="term-val">50% to start · 50% on delivery</span></div>
+          </div>
         </div>
-    </section>
+      </div>
 
-    <section id="contact" class="section reveal">
-        <h2 class="section-title gradient-text">Get In Touch</h2>
-        <div class="contact-container">
-            <p style="color: var(--text-secondary); font-size: 18px; margin-bottom: 30px;">
-                Have a project in mind? Let's work together to bring your ideas to life!
-            </p>
-            <div class="contact-links">
-                <a href="https://discord.com" class="contact-link" title="Discord">
-                    <i class="fab fa-discord"></i>
-                </a>
-                <a href="https://github.com" class="contact-link" title="GitHub">
-                    <i class="fab fa-github"></i>
-                </a>
-                <a href="https://twitter.com" class="contact-link" title="Twitter">
-                    <i class="fab fa-twitter"></i>
-                </a>
-                <a href="https://www.roblox.com" class="contact-link" title="Roblox">
-                    <i class="fas fa-cube"></i>
-                </a>
-                <a href="mailto:contact@0luascript.dev" class="contact-link" title="Email">
-                    <i class="fas fa-envelope"></i>
-                </a>
-            </div>
+      <!-- SKILLS BARS CARD -->
+      <div class="glass-card know-card know-skills reveal" style="transition-delay:.10s">
+        <div class="win-bar">
+          <span class="win-bar-title"><span class="term-prompt">◈</span> &lt;technical_skills&gt;</span>
+          <div class="win-controls"><div class="win-btn">─</div><div class="win-btn">□</div><div class="win-btn close">✕</div></div>
         </div>
-    </section>
+        <div class="know-body">
+          <div class="skill-bar-row">
+            <div class="skill-bar-label"><span>Scripting</span><span class="skill-bar-pct">98%</span></div>
+            <div class="skill-bar-track"><div class="skill-bar-fill" data-width="98"></div></div>
+          </div>
+          <div class="skill-bar-row">
+            <div class="skill-bar-label"><span>Building</span><span class="skill-bar-pct">85%</span></div>
+            <div class="skill-bar-track"><div class="skill-bar-fill" data-width="85"></div></div>
+          </div>
+          <div class="skill-bar-row">
+            <div class="skill-bar-label"><span>Modelling</span><span class="skill-bar-pct">80%</span></div>
+            <div class="skill-bar-track"><div class="skill-bar-fill" data-width="80"></div></div>
+          </div>
+          <div class="skill-bar-row">
+            <div class="skill-bar-label"><span>Animation</span><span class="skill-bar-pct">82%</span></div>
+            <div class="skill-bar-track"><div class="skill-bar-fill" data-width="82"></div></div>
+          </div>
+          <div class="skill-bar-row">
+            <div class="skill-bar-label"><span>VFX</span><span class="skill-bar-pct">88%</span></div>
+            <div class="skill-bar-track"><div class="skill-bar-fill" data-width="88"></div></div>
+          </div>
+        </div>
+      </div>
 
-    <footer>
-        <p>&copy; 2024 0luascript. All rights reserved. | Built with passion for Roblox development</p>
-    </footer>
+      <!-- PHILOSOPHY CARD -->
+      <div class="glass-card know-card know-philosophy reveal" style="transition-delay:.15s">
+        <div class="win-bar">
+          <span class="win-bar-title"><span class="term-prompt">//</span> &lt;review&gt;</span>
+          <div class="win-controls"><div class="win-btn">─</div><div class="win-btn">□</div><div class="win-btn close">✕</div></div>
+        </div>
+        <div class="know-body">
+          <div class="phil-label">scripting made easy</div>
+          <div class="term-divider"></div>
+          <div class="chat-thread">
+            <div class="chat-msg chat-other">
+              <div class="chat-bubble chat-bubble-other">Have the other scripters done it as fast as 0luascript?</div>
+            </div>
+            <div class="chat-msg chat-me">
+              <div class="chat-bubble chat-bubble-me">No — the other scripters proposed 2–3 weeks. You are quicker.</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <script>
-        // Navbar scroll effect
-        window.addEventListener('scroll', function() {
-            const navbar = document.getElementById('navbar');
-            if (window.scrollY > 50) {
-                navbar.classList.add('scrolled');
-            } else {
-                navbar.classList.remove('scrolled');
-            }
-        });
+    </div>
+  </section>
+  <div class="divider"></div>
 
-        // Smooth scrolling for navigation links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
+  <section id="skills">
+    <div class="reveal">
+      <div class="section-label">// capabilities</div>
+      <h2 class="section-title">What I Build</h2>
+      <p class="section-desc">Full-stack Roblox development — from gameplay loops to complex backend systems.</p>
+    </div>
+    <div class="skills-grid">
+      <div class="glass-card skill-card reveal" style="transition-delay:.05s">
+        <div class="skill-icon">◈</div>
+        <div class="skill-name">Game Systems</div>
+        <div class="skill-desc">Inventory, combat, progression, currencies — modular, data-driven systems built to scale.</div>
+      </div>
+      <div class="glass-card skill-card reveal" style="transition-delay:.10s">
+        <div class="skill-icon">◈</div>
+        <div class="skill-name">UI Engineering</div>
+        <div class="skill-desc">Fluid, animated interfaces using TweenService, React-Lua, and custom pipelines.</div>
+      </div>
+      <div class="glass-card skill-card reveal" style="transition-delay:.15s">
+        <div class="skill-icon">◈</div>
+        <div class="skill-name">Networking</div>
+        <div class="skill-desc">Efficient RemoteEvent architecture, lag compensation, and anti-exploit validation.</div>
+      </div>
+      <div class="glass-card skill-card reveal" style="transition-delay:.20s">
+        <div class="skill-icon">◈</div>
+        <div class="skill-name">DataStores</div>
+        <div class="skill-desc">Reliable player data with retry logic, session locking, and migration support.</div>
+      </div>
+      <div class="glass-card skill-card reveal" style="transition-delay:.25s">
+        <div class="skill-icon">◈</div>
+        <div class="skill-name">Frameworks</div>
+        <div class="skill-desc">Knit, Flamework, and custom ECS-style architectures. Clean, testable codebases.</div>
+      </div>
+      <div class="glass-card skill-card reveal" style="transition-delay:.30s">
+        <div class="skill-icon">◈</div>
+        <div class="skill-name">Anti-Cheat</div>
+        <div class="skill-desc">Server-authoritative logic, sanity checks, and exploit detection systems.</div>
+      </div>
+    </div>
+  </section>
 
-        // Reveal animations on scroll
-        function reveal() {
-            const reveals = document.querySelectorAll('.reveal');
-            
-            reveals.forEach(element => {
-                const windowHeight = window.innerHeight;
-                const elementTop = element.getBoundingClientRect().top;
-                const elementVisible = 150;
-                
-                if (elementTop < windowHeight - elementVisible) {
-                    element.classList.add('active');
-                }
-            });
-        }
+  <div class="divider"></div>
 
-        window.addEventListener('scroll', reveal);
-        reveal(); // Initial check
+  <section id="work">
+    <div class="reveal">
+      <div class="section-label">// previous work</div>
+      <h2 class="section-title">Showcase</h2>
+      <p class="section-desc">Send over your videos and images — these slots will be filled with your projects.</p>
+    </div>
+    <div class="showcase-grid">
+      <div class="glass-card showcase-card reveal" style="transition-delay:0.05s">
+        <div class="showcase-video-wrap">
+          <iframe src="https://www.youtube.com/embed/9xbNSCEu-GI" class="showcase-iframe" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+        </div>
+        <div class="showcase-info"><div class="showcase-tag">// project</div><div class="showcase-title">2D Backrooms</div></div>
+      </div>
+      <div class="glass-card showcase-card reveal" style="transition-delay:0.10s">
+        <div class="showcase-video-wrap">
+          <iframe src="https://www.youtube.com/embed/NC5WKCeKdrY" class="showcase-iframe" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+        </div>
+        <div class="showcase-info"><div class="showcase-tag">// project</div><div class="showcase-title">2D Gun Game</div></div>
+      </div>
+      <div class="glass-card showcase-card reveal" style="transition-delay:0.15s">
+        <div class="showcase-video-wrap">
+          <iframe src="https://www.youtube.com/embed/nuqpW13T0eY" class="showcase-iframe" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+        </div>
+        <div class="showcase-info"><div class="showcase-tag">// project</div><div class="showcase-title">Camera System</div></div>
+      </div>
+      <div class="glass-card showcase-card reveal" style="transition-delay:0.20s">
+        <div class="showcase-video-wrap">
+          <iframe src="https://www.youtube.com/embed/ubc2VoeeuvA" class="showcase-iframe" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+        </div>
+        <div class="showcase-info"><div class="showcase-tag">// project</div><div class="showcase-title">RNG System</div></div>
+      </div>
+      <div class="glass-card showcase-card reveal" style="transition-delay:0.25s">
+        <div class="showcase-video-wrap">
+          <iframe src="https://www.youtube.com/embed/jTeWDkvvsLQ" class="showcase-iframe" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+        </div>
+        <div class="showcase-info"><div class="showcase-tag">// project</div><div class="showcase-title">Abilities</div></div>
+      </div>
+      <div class="glass-card showcase-card reveal" style="transition-delay:0.30s">
+        <div class="showcase-video-wrap">
+          <iframe src="https://www.youtube.com/embed/sRVF4t5Kkjg" class="showcase-iframe" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+        </div>
+        <div class="showcase-info"><div class="showcase-tag">// project</div><div class="showcase-title">Camera Abilities</div></div>
+      </div>
+    </div>
+  </section>
 
-        // Add typing animation to hero title
-        const heroTitle = document.querySelector('.hero-title');
-        const text = heroTitle.innerHTML;
-        heroTitle.innerHTML = '';
-        let index = 0;
+  <div class="divider"></div>
 
-        function typeWriter() {
-            if (index < text.length) {
-                heroTitle.innerHTML = text.slice(0, index + 1);
-                index++;
-                setTimeout(typeWriter, 50);
-            }
-        }
+  <section id="pricing">
+    <div class="reveal">
+      <div class="section-label">// commission pricing</div>
+      <h2 class="section-title">Rates</h2>
+      <p class="section-desc">Select what you need and get an instant estimate.</p>
+    </div>
+    <div class="reveal" style="transition-delay:.05s">
+      <div class="glass-card">
+        <div class="win-bar">
+          <span class="win-bar-title">price_estimator.lua — 0luascript</span>
+          <div class="win-controls">
+            <div class="win-btn">─</div><div class="win-btn">□</div><div class="win-btn close">✕</div>
+          </div>
+        </div>
+        <div class="estimator-body">
+          <div class="estimator-cols">
+            <div class="estimator-left">
+              <div class="estimator-group-label">// base tier — pick one</div>
+              <div class="tier-list" id="tier-list">
+                <label class="tier-item"><input type="radio" name="tier" value="150" data-label="Small Scripts &amp; Bug Fixes"><span class="tier-name">Small Scripts &amp; Bug Fixes</span><span class="tier-price">from $150</span></label>
+                <label class="tier-item"><input type="radio" name="tier" value="250" data-label="Single System"><span class="tier-name">Single System</span><span class="tier-price">from $250</span></label>
+                <label class="tier-item"><input type="radio" name="tier" value="450" data-label="Multiple Systems"><span class="tier-name">Multiple Systems</span><span class="tier-price">from $450</span></label>
+                <label class="tier-item"><input type="radio" name="tier" value="600" data-label="Core Game Loop"><span class="tier-name">Core Game Loop</span><span class="tier-price">from $600</span></label>
+                <label class="tier-item"><input type="radio" name="tier" value="800" data-label="Playable Demo"><span class="tier-name">Playable Demo</span><span class="tier-price">from $800</span></label>
+                <label class="tier-item"><input type="radio" name="tier" value="1000" data-label="Full Game"><span class="tier-name">Full Game</span><span class="tier-price">from $1,000</span></label>
+              </div>
+              <div class="estimator-group-label" style="margin-top:24px">// add-ons — pick any</div>
+              <div class="addon-list" id="addon-list">
+                <label class="tier-item"><input type="checkbox" value="150" data-label="Physics Heavy"><span class="tier-name">Physics Heavy</span><span class="tier-price">+$150</span></label>
+                <label class="tier-item"><input type="checkbox" value="100" data-label="Large Bug Fixes"><span class="tier-name">Large Bug Fixes</span><span class="tier-price">+$100</span></label>
+                <label class="tier-item"><input type="checkbox" value="200" data-label="Complete Game Revamp"><span class="tier-name">Complete Game Revamp</span><span class="tier-price">+$200</span></label>
+                <label class="tier-item"><input type="checkbox" value="100" data-label="Asset Scripting"><span class="tier-name">Asset Scripting</span><span class="tier-price">+$100</span></label>
+              </div>
+              <div class="estimator-group-label" style="margin-top:24px">// revenue share</div>
+              <div class="addon-list">
+                <label class="tier-item"><input type="checkbox" value="0" data-label="Revenue Share (5%+, negotiated)"><span class="tier-name">Revenue Share</span><span class="tier-price">5%+</span></label>
+              </div>
+            </div>
+            <div class="estimator-right">
+              <div class="glass-card">
+                <div class="win-bar">
+                  <span class="win-bar-title">estimate.lua</span>
+                  <div class="win-controls"><div class="win-btn close">✕</div></div>
+                </div>
+                <div class="estimate-inner">
+                  <div class="estimate-empty" id="estimate-empty">
+                    <span>◈</span>
+                    Select a base tier to begin
+                  </div>
+                  <div id="estimate-content" class="hidden">
+                    <div class="estimate-section-label">// breakdown</div>
+                    <div id="estimate-breakdown" class="estimate-breakdown"></div>
+                    <div class="estimate-divider"></div>
+                    <div class="estimate-total-row">
+                      <span class="estimate-total-label">Total (USD)</span>
+                      <span id="estimate-usd" class="estimate-total-usd">$0</span>
+                    </div>
+                    <div class="estimate-total-row">
+                      <span class="estimate-total-label">Total (Robux)</span>
+                      <span id="estimate-robux" class="estimate-total-robux">R$0</span>
+                    </div>
+                    <div class="estimate-divider"></div>
+                    <div class="estimate-note">50% upfront · 50% on delivery · 2 revisions included · NDA on request · rates negotiable</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-        setTimeout(typeWriter, 500);
+  <div class="divider"></div>
 
-        // Project card click animation
-        document.querySelectorAll('.project-card').forEach(card => {
-            card.addEventListener('click', function() {
-                this.style.animation = 'pulse 0.3s ease';
-                setTimeout(() => {
-                    this.style.animation = '';
-                }, 300);
-            });
-        });
+  <section id="contact">
+    <div class="reveal">
+      <div class="section-label">// contact &amp; rates</div>
+      <h2 class="section-title">Let's Work Together</h2>
+      <p class="section-desc">Get in touch on Discord to discuss your project.</p>
+    </div>
+    <div class="contact-grid">
+      <a class="glass-card contact-card reveal" href="https://discord.com" target="_blank">
+        <div class="contact-platform">Discord · Primary</div>
+        <div class="contact-handle">@0LuaScript</div>
+        <div class="contact-detail">Fastest response · preferred for commissions</div>
+      </a>
+      <a class="glass-card contact-card reveal" href="https://roblox.com" target="_blank" style="transition-delay:.05s">
+        <div class="contact-platform">Roblox</div>
+        <div class="contact-handle">0luascript</div>
+        <div class="contact-detail">Profile · portfolio games</div>
+      </a>
+    </div>
+  </section>
 
-        // Add pulse animation
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes pulse {
-                0% { transform: scale(1); }
-                50% { transform: scale(0.95); }
-                100% { transform: scale(1); }
-            }
-        `;
-        document.head.appendChild(style);
-    </script>
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-copy">© 2025 0luascript · Jack · UK</div>
+      <div class="footer-tag">Built with <span>Luau</span> in mind.</div>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+/* PHARAOH BLOB */
+(function(){
+  const canvas=document.getElementById('blob-canvas'),ctx=canvas.getContext('2d');
+  let W,H,T=0;
+  function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;initBlobs();}
+  function sn(x,y,t){return Math.sin(x*1.3+t*.62)*Math.cos(y*1.1+t*.48)*.38+Math.sin(x*2.8-t*.37)*Math.sin(y*2.2+t*.55)*.26+Math.cos(x*4.2+t*1.05)*Math.cos(y*3.8-t*.88)*.16+Math.sin(x*.6+t*.18)*Math.cos(y*.5-t*.25)*.20;}
+  let blobs=[];
+  function initBlobs(){blobs=[{bx:.50,by:.44,orRx:.16,orRy:.10,spd:.00038,ang:0,mass:1.65},{bx:.30,by:.56,orRx:.10,orRy:.07,spd:-.00050,ang:2.09,mass:1.15},{bx:.70,by:.56,orRx:.10,orRy:.07,spd:.00044,ang:4.19,mass:1.15},{bx:.50,by:.22,orRx:.07,orRy:.05,spd:.00065,ang:1.57,mass:.80},{bx:.22,by:.70,orRx:.08,orRy:.06,spd:-.00042,ang:3.50,mass:.72},{bx:.78,by:.70,orRx:.08,orRy:.06,spd:.00046,ang:5.80,mass:.72},{bx:.50,by:.80,orRx:.12,orRy:.05,spd:-.00030,ang:.80,mass:.55}];}
+  const STEP=6,ISO=.95;
+  function field(px,py){let v=0;const ns=2.8/Math.min(W,H);v+=sn(px*ns,py*ns,T*.00075)*.32;for(const b of blobs){const cx=(b.bx+Math.cos(b.ang)*b.orRx)*W,cy=(b.by+Math.sin(b.ang*1.28)*b.orRy)*H,dx=px-cx,dy=py-cy,r=b.mass*.13*Math.min(W,H);v+=(r*r)/(dx*dx+dy*dy+1);}return v;}
+  function render(){T++;blobs.forEach(b=>b.ang+=b.spd);ctx.clearRect(0,0,W,H);const cols=Math.ceil(W/STEP)+2,rows=Math.ceil(H/STEP)+2,f=new Float32Array((cols+1)*(rows+1));for(let j=0;j<=rows;j++)for(let i=0;i<=cols;i++)f[j*(cols+1)+i]=field(i*STEP-STEP,j*STEP-STEP);ctx.fillStyle='rgba(8,6,4,0.062)';for(let j=0;j<rows;j++)for(let i=0;i<cols;i++){if(f[j*(cols+1)+i]>=ISO&&f[j*(cols+1)+i+1]>=ISO&&f[(j+1)*(cols+1)+i]>=ISO&&f[(j+1)*(cols+1)+i+1]>=ISO)ctx.fillRect(i*STEP-STEP,j*STEP-STEP,STEP+1,STEP+1);}for(const b of blobs){const cx=(b.bx+Math.cos(b.ang)*b.orRx)*W,cy=(b.by+Math.sin(b.ang*1.28)*b.orRy)*H,r=b.mass*.12*Math.min(W,H),nv=sn(cx/W*2,cy/H*2,T*.0006),aur=r*(2.5+Math.abs(nv)*.5),g=ctx.createRadialGradient(cx,cy,0,cx,cy,aur);g.addColorStop(0,`rgba(6,4,2,${.10*b.mass})`);g.addColorStop(.35,`rgba(6,4,2,${.050*b.mass})`);g.addColorStop(.7,'rgba(6,4,2,0.016)');g.addColorStop(1,'rgba(6,4,2,0)');ctx.beginPath();ctx.arc(cx,cy,aur,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();}requestAnimationFrame(render);}
+  resize();window.addEventListener('resize',resize);render();
+})();
+
+/* LIVE PRICE ESTIMATOR */
+(function(){
+  const ROBUX=290;
+  function update(){
+    const tierInput=document.querySelector('input[name="tier"]:checked');
+    const addonInputs=document.querySelectorAll('#addon-list input:checked, .addon-list input:checked');
+    const empty=document.getElementById('estimate-empty');
+    const content=document.getElementById('estimate-content');
+    const breakdown=document.getElementById('estimate-breakdown');
+    const usdEl=document.getElementById('estimate-usd');
+    const robuxEl=document.getElementById('estimate-robux');
+    document.querySelectorAll('.tier-item').forEach(el=>{const inp=el.querySelector('input');el.classList.toggle('selected',!!(inp&&inp.checked));});
+    if(!tierInput){empty.classList.remove('hidden');content.classList.add('hidden');return;}
+    empty.classList.add('hidden');content.classList.remove('hidden');
+    let total=parseInt(tierInput.value);
+    const lines=[{label:tierInput.dataset.label,usd:total}];
+    addonInputs.forEach(inp=>{const val=parseInt(inp.value);if(val>0){lines.push({label:inp.dataset.label,usd:val});total+=val;}else{lines.push({label:inp.dataset.label,usd:null});}});
+    breakdown.innerHTML=lines.map(l=>`<div class="estimate-line"><span>${l.label}</span><span>${l.usd!==null?'$'+l.usd.toLocaleString():'negotiated'}</span></div>`).join('');
+    usdEl.textContent='$'+total.toLocaleString();
+    robuxEl.textContent='R$'+(total*ROBUX).toLocaleString();
+  }
+  document.addEventListener('change',e=>{if(e.target.closest('#tier-list,#addon-list,.addon-list'))update();});
+})();
+
+
+/* SKILL BAR ANIMATION */
+(function(){
+  const bars = document.querySelectorAll('.skill-bar-fill');
+  const barObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if(e.isIntersecting) {
+        const w = e.target.getAttribute('data-width');
+        setTimeout(() => { e.target.style.width = w + '%'; }, 120);
+        barObs.unobserve(e.target);
+      }
+    });
+  }, {threshold: 0.3});
+  bars.forEach(b => barObs.observe(b));
+})();
+
+/* SCROLL REVEAL */
+const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in-view');});},{threshold:.11});
+document.querySelectorAll('.reveal').forEach(el=>{obs.observe(el);if(el.getBoundingClientRect().top<window.innerHeight)el.classList.add('in-view');});
+</script>
 </body>
 </html>
